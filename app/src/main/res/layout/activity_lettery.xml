@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    tools:context=".activity.LetteryActivity">
+    <com.example.qiang.fireWorks.FireworkView
+        android:id="@+id/fv"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:fireworkCount="0"
+        app:showBg="true"
+        app:showFirework="false" />
+    <EditText
+        android:id="@+id/addData"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="输入要添加的数据"
+        android:textColorHint="#FF0000"
+        android:textColor="#FF0000"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        android:ems="15"/>
+
+    <LinearLayout
+        android:id="@+id/Linear1"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginBottom="0dp"
+        android:layout_marginTop="16dp"
+        android:orientation="vertical"
+        android:paddingBottom="0dp"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:paddingTop="5dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/addData"
+        app:layout_constraintHeight_percent="0.41"
+        >
+        <LinearLayout
+            android:id="@+id/close"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+        <Button
+            android:id="@+id/Add"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp"
+            android:layout_marginBottom="0dp"
+            android:layout_weight="1"
+            android:paddingBottom="0dp"
+            android:text="添加" />
+
+        <Button
+            android:id="@+id/clearData"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_margin="3dp"
+            android:layout_marginBottom="0dp"
+            android:layout_weight="1"
+            android:paddingBottom="0dp"
+            android:text="清除数据" />
+        </LinearLayout>
+        <Button
+            android:id="@+id/Start"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:background="#FF0000"
+            android:gravity="center"
+            android:layout_margin="3dp"
+            android:layout_marginBottom="0dp"
+            android:paddingBottom="0dp"
+            android:text="开始抽奖" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/Linear1"
+        app:layout_constraintHeight_percent="0.45"
+        >
+         <LinearLayout
+             android:layout_width="match_parent"
+             android:layout_height="wrap_content"
+             android:gravity="center"
+             android:orientation="horizontal"
+             >
+        <TextView
+            android:id="@+id/DataView"
+            android:layout_width="wrap_content"
+            android:paddingRight="15dp"
+            android:paddingLeft="15dp"
+            android:textColor="#FF0000"
+            android:layout_height="wrap_content"
+
+            android:layout_gravity="center_horizontal"
+            android:textAppearance="@android:style/TextAppearance.Large" />
+             <TextView
+                 android:id="@+id/DataView1"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+                 android:paddingRight="15dp"
+                 android:paddingLeft="15dp"
+                 android:textColor="#FF0000"
+                 android:text="抽奖中心"
+                 android:layout_gravity="center_horizontal"
+                 android:textAppearance="@android:style/TextAppearance.Large" />
+             <TextView
+                 android:id="@+id/DataView2"
+                 android:layout_width="wrap_content"
+                 android:layout_height="wrap_content"
+                 android:paddingRight="15dp"
+                 android:textColor="#FF0000"
+                 android:paddingLeft="15dp"
+                 android:layout_gravity="center_horizontal"
+                 android:textAppearance="@android:style/TextAppearance.Large" />
+         </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            >
+
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/firstPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            >
+
+            <TextView
+                android:id="@+id/First"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1.5"
+                android:gravity="center"
+                android:textColor="#FF0000"
+                android:layout_gravity="center_horizontal"
+                android:textSize="50px"
+                android:text="三等奖:" />
+            <TextView
+                android:id="@+id/Winner1"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:textColor="#E60000"
+                android:layout_gravity="center_horizontal"
+                android:textSize="50px"
+                android:text="待定" />
+        </LinearLayout>
+            <LinearLayout
+                android:id="@+id/secondPrice"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/Second"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1.5"
+                android:gravity="center"
+                android:textColor="#FF0000"
+                android:layout_gravity="center_horizontal"
+                android:textSize="50px"
+                android:text="二等奖:" />
+            <TextView
+                android:id="@+id/Winner2"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:layout_height="50dp"
+                android:textColor="#E60000"
+                android:gravity="center"
+                android:layout_gravity="center_horizontal"
+                android:textSize="50px"
+                android:text="待定" />
+        </LinearLayout>
+        <LinearLayout
+            android:id="@+id/thirdPrice"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+            <TextView
+                android:id="@+id/Third"
+                android:layout_width="0dp"
+                android:layout_height="50dp"
+                android:layout_weight="1.5"
+                android:gravity="center"
+                android:textColor="#FF0000"
+                android:layout_gravity="center_horizontal"
+                android:textSize="50px"
+                android:text="一等奖:" />
+            <TextView
+                android:id="@+id/Winner3"
+                android:layout_width="0dp"
+                android:layout_weight="2"
+                android:layout_height="50dp"
+                android:gravity="center"
+                android:layout_gravity="center_horizontal"
+                android:textColor="#E60000"
+                android:textSize="50px"
+                android:text="待定" />
+
+        </LinearLayout>
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

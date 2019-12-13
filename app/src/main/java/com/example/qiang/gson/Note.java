@@ -1,14 +1,6 @@
 package com.example.qiang.gson;
 
-
-import androidx.annotation.Nullable;
-import androidx.room.ColumnInfo;
-import androidx.room.Entity;
-import androidx.room.PrimaryKey;
-
 import org.litepal.crud.DataSupport;
-
-
 public class Note extends DataSupport {
 
     private int id;
@@ -31,6 +23,15 @@ public class Note extends DataSupport {
 
     private int totalpeople;
 
+    private boolean endless;
+
+    public boolean isEndless() {
+        return endless;
+    }
+
+    public void setEndless(boolean endless) {
+        this.endless = endless;
+    }
 
     public String getAward1() {
         return award1;
@@ -103,6 +104,7 @@ public class Note extends DataSupport {
     public void setTitle(String title) {
         this.title = title;
     }
+
 
 
     public int getId() {

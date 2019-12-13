@@ -1,7 +1,6 @@
 package com.example.qiang.adapter;
 
 import android.content.Intent;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -9,15 +8,12 @@ import android.view.ViewGroup;
 import android.widget.Filter;
 import android.widget.Filterable;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
-
 import com.example.qiang.R;
 import com.example.qiang.activity.EditNoteActivity;
 import com.example.qiang.activity.LetteryActivity;
 import com.example.qiang.gson.Note;
-
 import java.util.ArrayList;
 import java.util.List;
 

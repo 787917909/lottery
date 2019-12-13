@@ -36,6 +36,7 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
     private CheckBox checkfirst;
     private CheckBox checksecond;
     private CheckBox checkthird;
+    private CheckBox checkendless;
     private EditText award1;
     private EditText award2;
     private EditText award3;
@@ -57,6 +58,7 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
         checkfirst = findViewById(R.id.check_first);
         checksecond = findViewById(R.id.check_second);
         checkthird = findViewById(R.id.check_third);
+        checkendless = findViewById(R.id.check_endless);
         award1 = findViewById(R.id.award1);
         award2 = findViewById(R.id.award2);
         award3 = findViewById(R.id.award3);
@@ -102,6 +104,7 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
                     peoplefirst.setText("");
                     checksecond.setChecked(false);
                     checkthird.setChecked(false);
+                    checkendless.setChecked(false);
                 }
             }
         });
@@ -369,6 +372,7 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
         note.setPeoplethird(autozero(peoplethird.getText().toString()));
         note.setDate(date);
         note.setTotalpeople(note.getPeoplefirst()+note.getPeoplesecond()+note.getPeoplethird());
+        note.setEndless(checkendless.isChecked());
 //        note.setDescription(description.getText().toString().trim());
         new AsyncTask<Note, Void, Void>() {
             @Override
@@ -394,6 +398,7 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
                         note.setPeoplethird(saveNote.getPeoplethird());
                     }
                     note.setTotalpeople(saveNote.getTotalpeople());
+                    note.setEndless(saveNote.isEndless());
 //                    note.setDescription(saveNote.getDescription());
                     note.updateAll("id=?", String.valueOf(saveNote.getId()));
                     List<Note> noteList= DataSupport.where("id=?","10").find(Note.class);
@@ -412,6 +417,7 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
                     note.setPeoplesecond(saveNote.getPeoplesecond());
                     note.setPeoplethird(saveNote.getPeoplethird());
                     note.setTotalpeople(saveNote.getTotalpeople());
+                    note.setEndless(saveNote.isEndless());
                     note.setDate(date);
                     note.save();
                 }

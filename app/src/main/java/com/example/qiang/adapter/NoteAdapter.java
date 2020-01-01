@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.qiang.R;
 import com.example.qiang.activity.EditNoteActivity;
 import com.example.qiang.activity.LetteryActivity;
+import com.example.qiang.entity.Mainlottery;
 import com.example.qiang.gson.Note;
 import java.util.ArrayList;
 import java.util.List;
@@ -22,8 +23,8 @@ import java.util.List;
  */
 public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> implements Filterable {
     private static final String TAG = "NoteAdapter";
-    private List<Note> notes ;
-    private List<Note> noteListFiltered ;
+    private List<Mainlottery> notes ;
+    private List<Mainlottery> noteListFiltered ;
 //    private final ActionCallback callback;
 
     public interface ContactsAdapterListener {
@@ -39,8 +40,8 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
                 if (charString.isEmpty()) {
                     noteListFiltered = notes;
                 } else {
-                    List<Note> filteredList = new ArrayList<>();
-                    for (Note row : notes) {
+                    List<Mainlottery> filteredList = new ArrayList<>();
+                    for (Mainlottery row : notes) {
 
                         // name match condition. this might differ depending on your requirement
                         // here we are looking for name or phone number match
@@ -57,13 +58,13 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
 
             @Override
             protected void publishResults(CharSequence charSequence, FilterResults filterResults) {
-                noteListFiltered = (ArrayList<Note>) filterResults.values;
+                noteListFiltered = (ArrayList<Mainlottery>) filterResults.values;
                 notifyDataSetChanged();
             }
         };
     }
 
-    public NoteAdapter(List<Note> notes) {
+    public NoteAdapter(List<Mainlottery> notes) {
         this.notes = notes;
         this.noteListFiltered = notes;
 //        this.callback = callback;
@@ -94,7 +95,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
 
     @Override
     public void onBindViewHolder(ViewHolder holder, int position) {
-        Note note = noteListFiltered.get(position);
+        Mainlottery note = noteListFiltered.get(position);
         holder.title.setText(note.getTitle());
         holder.date.setText(note.getDate());
         holder.renshu.setText("人数");
@@ -108,11 +109,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
         return noteListFiltered.size();
     }
 
-    public Note getNote(int position) {
+    public Mainlottery getNote(int position) {
         return notes.get(position);
     }
 
-    public void setNotes(@NonNull List<Note> notes) {
+    public void setNotes(@NonNull List<Mainlottery> notes) {
         this.notes = notes;
         this.noteListFiltered = notes;
         notifyDataSetChanged();

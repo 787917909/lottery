@@ -11,22 +11,35 @@ import android.view.View.OnClickListener;
 import android.widget.CheckBox;
 import android.widget.CompoundButton;
 import android.widget.EditText;
-import android.widget.TextView;
 import android.widget.Toast;
-
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.example.qiang.R;
+import com.example.qiang.entity.Mainlottery;
 import com.example.qiang.gson.Note;
+import com.example.qiang.http.HttpUtil;
+import com.example.qiang.util.ToastUtil;
 import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+
+import org.jetbrains.annotations.NotNull;
 import org.litepal.crud.DataSupport;
 
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 public class EditNoteActivity extends AppCompatActivity implements OnClickListener {
     private static final String TAG="EditNoteActivity";
@@ -44,7 +57,7 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
     private EditText peoplesecond;
     private EditText peoplethird;
     private Long noteId;
-    private Note note;
+    private Mainlottery note;
     protected ActionBar mActionBar;
     public static Bundle newInstanceBundle(long noteId) {
         Bundle bundle = new Bundle();
@@ -79,7 +92,6 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
         peoplethird.setFocusableInTouchMode(false);
         mActionBar = getSupportActionBar();
             mActionBar.setDisplayHomeAsUpEnabled(true);
-
         Intent intent = getIntent();
         if (intent.hasExtra(EXTRA_NOTE_ID)) {
             noteId = intent.getLongExtra(EXTRA_NOTE_ID, -1);
@@ -87,6 +99,16 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
         title = (EditText) findViewById(R.id.title);
         //category = (TextView) findViewById(R.id.category);
         findViewById(R.id.save).setOnClickListener(this);
+        checkendless.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked){
+                    checksecond.setChecked(false);
+                    checkthird.setChecked(false);
+                }else {
+                }
+            }
+        });
         checkfirst.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -112,12 +134,12 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked){
-                    if (checkfirst.isChecked()){
+                    if (checkfirst.isChecked()&&!checkendless.isChecked()){
                     award2.setFocusable(true);
                     peoplesecond.setFocusable(true);
                     award2.setFocusableInTouchMode(true);
                     peoplesecond.setFocusableInTouchMode(true);}else {
-                        Toast.makeText(EditNoteActivity.this,"请开启一等奖",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditNoteActivity.this,"请开启一等奖或关闭无尽",Toast.LENGTH_SHORT).show();
                         checksecond.setChecked(false);
                     }
                 }else {
@@ -135,12 +157,12 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
                 if (isChecked){
-                    if (checksecond.isChecked()){
+                    if (checksecond.isChecked()&&!checkendless.isChecked()){
                     award3.setFocusable(true);
                     peoplethird.setFocusable(true);
                     award3.setFocusableInTouchMode(true);
                     peoplethird.setFocusableInTouchMode(true);}else {
-                        Toast.makeText(EditNoteActivity.this,"请开启二等奖",Toast.LENGTH_SHORT).show();
+                        Toast.makeText(EditNoteActivity.this,"请开启二等奖或关闭无尽",Toast.LENGTH_SHORT).show();
                         checkthird.setChecked(false);
                     }
                 }else {
@@ -254,34 +276,61 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
         }
     }
 
-     private Handler handler = new Handler(){
-        public void handleMessage(Message msg){
-            switch (msg.what){
-                case UPDATE_TEXT:
-                   Bundle a = msg.getData();
-                   String data = a.getString("data");
-                    Log.d(TAG, "在这里爱仕达所多"+data);
-                   Note note = new Gson().fromJson(data,Note.class);
-                    setNote(note);
-                    break;
-            }
-        }
-     };
+//     private Handler handler = new Handler(){
+//        public void handleMessage(Message msg){
+//            switch (msg.what){
+//                case UPDATE_TEXT:
+//                   Bundle a = msg.getData();
+//                   String data = a.getString("data");
+//                    Log.d(TAG, "在这里爱仕达所多"+data);
+//                   Note note = new Gson().fromJson(data,Note.class);
+//                   runOnUiThread(new Runnable() {
+//                       @Override
+//                       public void run() {
+//                           setNote(note) ;
+//                       }
+//                   });
+//                    ;
+//                    break;
+//            }
+//        }
+//     };
+
 
     private void loadNote() {
-        new AsyncTask<Void, Void, Note>() {
+        Map<String,String> param = new HashMap<String,String>();
+        param.put("id",noteId.toString());
+        HttpUtil.sendOkHttpRequestText(HttpUtil.BASE_URL + "lottery/findmlotterybyid.do", param, new Callback() {
             @Override
-            protected Note doInBackground(Void... params) {
-                List<Note> noteList= DataSupport.where("id=?",noteId.toString()).find(Note.class);
-                Note note = noteList.get(0);
-                Log.d(TAG, "doInBackground: "+note.toString());
-                return note;
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
             }
             @Override
-            protected void onPostExecute(Note note) {
-                setNote(note);
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                final Mainlottery note = new Gson().fromJson(response.body().string(),Mainlottery.class);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        setNote(note);
+                    }
+                });
+
             }
-        }.execute();
+        });
+        }
+//    private void loadNote() {
+//        new AsyncTask<Void, Void, Note>() {
+//            @Override
+//            protected Note doInBackground(Void... params) {
+//                List<Note> noteList= DataSupport.where("id=?",noteId.toString()).find(Note.class);
+//                Note note = noteList.get(0);
+//                Log.d(TAG, "doInBackground: "+note.toString());
+//                return note;
+//            }
+//            @Override
+//            protected void onPostExecute(Note note) {
+//                setNote(note);
+//            }
+//        }.execute();
 
         /*new Thread(new Runnable() {
             @Override
@@ -297,7 +346,7 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
                 handler.sendMessage(message);
             }
         }).start();*/
-    }
+
 
     private boolean zerotonull(int temp){
         if (temp==0){
@@ -305,7 +354,7 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
         }else return true;
     }
 
-    private void setNote(Note note) {
+    private void setNote(Mainlottery note) {
         this.note = note;
         title.setText(note.getTitle());
         award1.setText(note.getAward1());
@@ -321,6 +370,7 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
         if (zerotonull(note.getPeoplethird())){
             checkthird.setChecked(true);
         peoplethird.setText(String.valueOf(note.getPeoplethird()));}
+        checkendless.setChecked(note.isEndless());
     }
 
     /*private void loadCategories() {
@@ -358,9 +408,12 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
 
     private void saveNote() {
         if (note == null) {
-            note = new Note();
+            note = new Mainlottery();
+
+        }else {
+            note.setId(Integer.valueOf(noteId.toString()));
         }
-        SimpleDateFormat formatter = new SimpleDateFormat("yyyy年MM月dd日");
+        SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd hh:mm:ss");
         Date curDate = new Date(System.currentTimeMillis());
         final String date = formatter.format(curDate);
         note.setTitle(title.getText().toString().trim());
@@ -373,61 +426,97 @@ public class EditNoteActivity extends AppCompatActivity implements OnClickListen
         note.setDate(date);
         note.setTotalpeople(note.getPeoplefirst()+note.getPeoplesecond()+note.getPeoplethird());
         note.setEndless(checkendless.isChecked());
-//        note.setDescription(description.getText().toString().trim());
-        new AsyncTask<Note, Void, Void>() {
+        Gson gson = new Gson();
+        JSONObject jsonObject = JSONObject.parseObject(gson.toJson(note));
+        HttpUtil.sendOkHttpRequestJson(HttpUtil.BASE_URL + "lottery/mlotterysave.do", jsonObject, new Callback() {
             @Override
-            protected Void doInBackground(Note... params) {
-                Note saveNote = params[0];
-                if (saveNote.getId() > 0) {
-                   /* db.getNoteDao().updateAll(saveNote);*/
-                    Note note = new Note();
-                    note.setTitle(saveNote.getTitle());
-                    note.setAward1(saveNote.getAward1());
-                    note.setAward2(saveNote.getAward2());
-                    note.setAward3(saveNote.getAward3());
-                    if (saveNote.getPeoplefirst()==0){
-                        note.setToDefault("peoplefirst");
-                    }else {
-                        note.setPeoplefirst(saveNote.getPeoplefirst());}
-                    if (saveNote.getPeoplesecond()==0) {
-                        note.setToDefault("peoplesecond");
-                    }else {
-                        note.setPeoplesecond(saveNote.getPeoplesecond());}
-                    if (saveNote.getPeoplethird()==0){
-                        note.setToDefault("peoplethird");}else {
-                        note.setPeoplethird(saveNote.getPeoplethird());
-                    }
-                    note.setTotalpeople(saveNote.getTotalpeople());
-                    note.setEndless(saveNote.isEndless());
-//                    note.setDescription(saveNote.getDescription());
-                    note.updateAll("id=?", String.valueOf(saveNote.getId()));
-                    List<Note> noteList= DataSupport.where("id=?","10").find(Note.class);
-                    Note note1 = noteList.get(0);
-                    Log.d(TAG, "doInBackground: "+note.toString());
-                    Log.d(TAG, "doInBackground: "+String.valueOf(saveNote.getId()));
-                    Log.d(TAG, "doInBackground: "+String.valueOf(note1.toString()));
-                } else {
-                    /*db.getNoteDao().insertAll(saveNote);*/
-                    Note note = new Note();
-                    note.setTitle(saveNote.getTitle());
-                    note.setAward1(saveNote.getAward1());
-                    note.setAward2(saveNote.getAward2());
-                    note.setAward3(saveNote.getAward3());
-                    note.setPeoplefirst(saveNote.getPeoplefirst());
-                    note.setPeoplesecond(saveNote.getPeoplesecond());
-                    note.setPeoplethird(saveNote.getPeoplethird());
-                    note.setTotalpeople(saveNote.getTotalpeople());
-                    note.setEndless(saveNote.isEndless());
-                    note.setDate(date);
-                    note.save();
-                }
-                return null;
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
             }
             @Override
-            protected void onPostExecute(Void aVoid) {
-                setResult(RESULT_OK);
-                finish();
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                final JSONObject json = JSONObject.parseObject(response.body().string());
+                runOnUiThread(
+                        new Runnable() {
+                            @Override
+                            public void run() {
+                                if (json.getBoolean("errres")) {
+                                    ToastUtil.showMsg( EditNoteActivity.this,"成功");
+                                    finish();
+                                }else {
+                                    ToastUtil.showMsg ( EditNoteActivity.this,"失败");
+                                }
+                            }
+                        }
+                );
             }
-        }.execute(note);
+        });
     }
+//        note.setDescription(description.getText().toString().trim());
+//        new AsyncTask<Mainlottery, Void, Void>() {
+//            @Override
+//            protected Void doInBackground(Mainlottery... params) {
+//                Mainlottery saveNote = params[0];
+//                if (saveNote.getId() > 0) {
+//                   /* db.getNoteDao().updateAll(saveNote);*/
+//                    Mainlottery note = new Mainlottery();
+//                    note.setTitle(saveNote.getTitle());
+//                    note.setAward1(saveNote.getAward1());
+//                    note.setAward2(saveNote.getAward2());
+//                    note.setAward3(saveNote.getAward3());
+//                        note.setPeoplefirst(saveNote.getPeoplefirst());
+//                        note.setPeoplesecond(saveNote.getPeoplesecond());
+//                        note.setPeoplethird(saveNote.getPeoplethird());
+//                    note.setTotalpeople(saveNote.getTotalpeople());
+//
+//                    note.setEndless(saveNote.isEndless());
+//                    Gson gson = new Gson();
+//                    JSONObject jsonObject = JSONObject.parseObject(gson.toJson(note));
+//                 HttpUtil.sendOkHttpRequestJson(HttpUtil.BASE_URL + "lottery/mlotterysave.do", jsonObject, new Callback() {
+//                     @Override
+//                     public void onFailure(@NotNull Call call, @NotNull IOException e) {
+//
+//                     }
+//
+//                     @Override
+//                     public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+//                          final JSONObject json = JSONObject.parseObject(response.body().string());
+//                          runOnUiThread(
+//                                  new Runnable() {
+//                                      @Override
+//                                      public void run() {
+//                                          if (json.getBoolean("errres")) {
+//                                              ToastUtil.showMsg( EditNoteActivity.this,"成功");
+//                                          }else {
+//                                              ToastUtil.showMsg( EditNoteActivity.this,"失败");
+//                                          }
+//                                      }
+//                                  }
+//                          );
+//                     }
+//                 });
+//
+//                } else {
+//                    /*db.getNoteDao().insertAll(saveNote);*/
+//                    Note note = new Note();
+//                    note.setTitle(saveNote.getTitle());
+//                    note.setAward1(saveNote.getAward1());
+//                    note.setAward2(saveNote.getAward2());
+//                    note.setAward3(saveNote.getAward3());
+//                    note.setPeoplefirst(saveNote.getPeoplefirst());
+//                    note.setPeoplesecond(saveNote.getPeoplesecond());
+//                    note.setPeoplethird(saveNote.getPeoplethird());
+//                    note.setTotalpeople(saveNote.getTotalpeople());
+//                    note.setEndless(saveNote.isEndless());
+//                    note.setDate(date);
+//                    note.save();
+//                }
+//                return null;
+//            }
+//            @Override
+//            protected void onPostExecute(Void aVoid) {
+//
+//                finish();
+//            }
+//        }.execute(note);
+
 }

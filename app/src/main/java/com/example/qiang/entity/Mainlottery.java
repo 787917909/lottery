@@ -1,9 +1,10 @@
-package com.example.qiang.gson;
+package com.example.qiang.entity;
 
-import org.litepal.crud.DataSupport;
-public class Note extends DataSupport {
+public class Mainlottery {
 
     private int id;
+
+    private int meetingid;
 
     private String title;
 
@@ -14,6 +15,9 @@ public class Note extends DataSupport {
     private String award3;
 
     private String date;
+
+
+    private String winjson;
 
     private int peoplefirst;
 
@@ -113,19 +117,37 @@ public class Note extends DataSupport {
         this.id = id;
     }
 
+    public int getMeetingid() {
+        return meetingid;
+    }
+
+    public void setMeetingid(int meetingid) {
+        this.meetingid = meetingid;
+    }
+    public String getWinjson() {
+        return winjson;
+    }
+
+    public void setWinjson(String winjson) {
+        this.winjson = winjson;
+    }
+
     @Override
     public String toString() {
-        return "Note{" +
+        return "Mainlottery{" +
                 "id=" + id +
+                ", meetingid=" + meetingid +
                 ", title='" + title + '\'' +
                 ", award1='" + award1 + '\'' +
                 ", award2='" + award2 + '\'' +
                 ", award3='" + award3 + '\'' +
                 ", date='" + date + '\'' +
+                ", winjson='" + winjson + '\'' +
                 ", peoplefirst=" + peoplefirst +
                 ", peoplesecond=" + peoplesecond +
                 ", peoplethird=" + peoplethird +
                 ", totalpeople=" + totalpeople +
+                ", endless=" + endless +
                 '}';
     }
 }

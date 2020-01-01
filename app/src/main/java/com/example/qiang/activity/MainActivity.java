@@ -19,6 +19,9 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import com.alibaba.fastjson.JSONArray;
 import com.example.qiang.R;
 import com.example.qiang.RecyclerView.OnItemMenuClickListener;
 import com.example.qiang.RecyclerView.SwipeMenu;
@@ -28,18 +31,32 @@ import com.example.qiang.RecyclerView.SwipeMenuItem;
 import com.example.qiang.RecyclerView.SwipeRecyclerView;
 import com.example.qiang.adapter.NoteAdapter;
 import com.example.qiang.domain.MyDividerItemDecoration;
+import com.example.qiang.entity.Mainlottery;
 import com.example.qiang.gson.Note;
+import com.example.qiang.http.HttpUtil;
 import com.example.qiang.tool.CustomDialog;
+import com.example.qiang.util.ToastUtil;
+import com.google.gson.JsonArray;
 
+import org.jetbrains.annotations.NotNull;
 import org.litepal.crud.DataSupport;
+
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.Response;
 
 public class MainActivity extends AppCompatActivity implements OnClickListener {
 
+    private SwipeRefreshLayout swipeRefresh;
     private NoteAdapter adapter;
     private SearchView searchView;
-    List<Note>  notes;
+    List<Mainlottery> notes;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,6 +65,8 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         findViewById(R.id.add).setOnClickListener(this);
         notes = new ArrayList<>();
         adapter = new NoteAdapter(notes);
+        swipeRefresh = findViewById(R.id.refresh);
+        swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
         SwipeRecyclerView recyclerView = (SwipeRecyclerView) findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setItemAnimator(new DefaultItemAnimator());
@@ -71,6 +90,31 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(recyclerView);*/
+     swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+         @Override
+         public void onRefresh() {
+
+             new Thread(new Runnable() {
+                 @Override
+                 public void run() {
+                     try {
+                         Thread.sleep(2000);
+                     } catch (InterruptedException e) {
+                         e.printStackTrace();
+                     }
+                     runOnUiThread(new Runnable() {
+                         @Override
+                         public void run() {
+                             loadNotes();
+                             swipeRefresh.setRefreshing(false);
+                             ToastUtil.showMsg(MainActivity.this,"刷新成功");
+                         }
+                     });
+
+                 }
+             }).start();
+         }
+     });
     }
 
     @Override
@@ -233,36 +277,78 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
     }
 
     private void loadNotes() {
-        new AsyncTask<Void, Void, List<Note>>() {
+        HttpUtil.sendOkHttpRequest(HttpUtil.BASE_URL + "lottery/findmlottery.do", new Callback() {
             @Override
-            protected List<Note> doInBackground(Void... params) {
-                return DataSupport.findAll(Note.class);
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        ToastUtil.showMsg(MainActivity.this,"this error");
+                    }
+                });
+
             }
+
             @Override
-            protected void onPostExecute(List<Note> notes) {
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+            JSONArray jsonArray = JSONArray.parseArray( response.body().string());
+            List<Mainlottery> list = jsonArray.toJavaList(Mainlottery.class);
                 MainActivity.this.notes.clear();
-                MainActivity.this.notes.addAll(notes);
-                adapter.notifyDataSetChanged();
-                //adapter.setNotes(notes);
+                MainActivity.this.notes.addAll(list);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        adapter.notifyDataSetChanged();
+                    }
+                });
             }
-        }.execute();
+        });
     }
 
-    private void deleteNote(Note note) {
-        new AsyncTask<Note, Void, Void>() {
+//    private void loadNotes() {
+//        new AsyncTask<Void, Void, List<Mainlottery>>() {
+//            @Override
+//            protected List<Mainlottery> doInBackground(Void... params) {
+//
+//                return DataSupport.findAll(Mainlottery.class);
+//            }
+//            @Override
+//            protected void onPostExecute(List<Mainlottery> notes) {
+//                MainActivity.this.notes.clear();
+//                MainActivity.this.notes.addAll(notes);
+//                adapter.notifyDataSetChanged();
+//                //adapter.setNotes(notes);
+//            }
+//        }.execute();
+//    }
+
+    private void deleteNote(Mainlottery note) {
+        Map<String,String> param = new HashMap<String, String>();
+        param.put("ids",String.valueOf(note.getId()));
+        HttpUtil.sendOkHttpRequestText(HttpUtil.BASE_URL + "lottery/mlotterydelete.do", param, new Callback() {
             @Override
-            protected Void doInBackground(Note... params) {
-               /* db.getNoteDao().deleteAll(params);*/
-                Note note1 = params[0];
-                DataSupport.deleteAll(Note.class,"id=?",String.valueOf(note1.getId()));
-                return null;
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
             }
 
             @Override
-            protected void onPostExecute(Void aVoid) {
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                 loadNotes();
             }
-        }.execute(note);
-
+        });
+//        new AsyncTask<Mainlottery, Void, Void>() {
+//            @Override
+//            protected Void doInBackground(Mainlottery... params) {
+//               /* db.getNoteDao().deleteAll(params);*/
+//                Mainlottery note1 = params[0];
+//                DataSupport.deleteAll(Note.class,"id=?",String.valueOf(note1.getId()));
+//                return null;
+//            }
+//
+//            @Override
+//            protected void onPostExecute(Void aVoid) {
+//                loadNotes();
+//            }
+//        }.execute(note);
     }
 }

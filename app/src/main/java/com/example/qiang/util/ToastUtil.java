@@ -13,5 +13,4 @@ public class ToastUtil {
         }
         toast.show();
     }
-
 }

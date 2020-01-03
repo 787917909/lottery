@@ -1,10 +1,7 @@
 package com.example.qiang.http;
-
 import com.alibaba.fastjson.JSONObject;
-
 import java.io.UnsupportedEncodingException;
 import java.util.Map;
-
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
 import okhttp3.OkHttpClient;
@@ -12,9 +9,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 
 public class HttpUtil {
-//    public static String BASE_URL= "http://10.132.212.167:8080/bird/";
-    public static String BASE_URL= "http://223.255.255.194:8080/bird/";
-
+    public static String BASE_URL= "http://10.132.212.167:8080/bird/";
+//    public static String BASE_URL= "http://223.255.255.194:8080/bird/";
 
     public static void sendOkHttpRequest(String address, okhttp3.Callback callback){
         OkHttpClient client = new OkHttpClient();

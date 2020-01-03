@@ -283,7 +283,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        ToastUtil.showMsg(MainActivity.this,"this error");
+                        ToastUtil.showMsg(MainActivity.this,"无法连接服务器");
                     }
                 });
 

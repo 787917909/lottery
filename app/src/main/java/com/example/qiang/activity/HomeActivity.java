@@ -1,25 +1,22 @@
 package com.example.qiang.activity;
-import android.app.SearchManager;
-import android.content.Context;
-import android.content.Intent;
-import android.graphics.Color;
-import android.os.AsyncTask;
-import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
-import android.view.View;
-import android.view.View.OnClickListener;
-import android.view.ViewGroup;
-import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.recyclerview.widget.DefaultItemAnimator;
 import androidx.recyclerview.widget.DividerItemDecoration;
-import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
+
+import android.app.SearchManager;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Color;
+import android.os.Bundle;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Toast;
 
 import com.alibaba.fastjson.JSONArray;
 import com.example.qiang.R;
@@ -29,17 +26,17 @@ import com.example.qiang.RecyclerView.SwipeMenuBridge;
 import com.example.qiang.RecyclerView.SwipeMenuCreator;
 import com.example.qiang.RecyclerView.SwipeMenuItem;
 import com.example.qiang.RecyclerView.SwipeRecyclerView;
+import com.example.qiang.adapter.LotteryAdapter;
 import com.example.qiang.adapter.NoteAdapter;
 import com.example.qiang.domain.MyDividerItemDecoration;
 import com.example.qiang.entity.Mainlottery;
-import com.example.qiang.gson.Note;
+import com.example.qiang.entity.Theme;
 import com.example.qiang.http.HttpUtil;
+import com.example.qiang.tool.BundleTemp;
 import com.example.qiang.tool.CustomDialog;
 import com.example.qiang.util.ToastUtil;
-import com.google.gson.JsonArray;
 
 import org.jetbrains.annotations.NotNull;
-import org.litepal.crud.DataSupport;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -51,20 +48,18 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Response;
 
-public class MainActivity extends AppCompatActivity implements OnClickListener {
-
+public class HomeActivity extends AppCompatActivity implements View.OnClickListener {
     private SwipeRefreshLayout swipeRefresh;
-    private NoteAdapter adapter;
+    private LotteryAdapter adapter;
     private SearchView searchView;
-    List<Mainlottery> notes;
+    List<Theme> notes = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_home);
         findViewById(R.id.add).setOnClickListener(this);
-        notes = new ArrayList<>();
-        adapter = new NoteAdapter(notes);
+        adapter = new LotteryAdapter(notes);
         swipeRefresh = findViewById(R.id.refresh);
         swipeRefresh.setColorSchemeResources(R.color.colorPrimary);
         SwipeRecyclerView recyclerView = (SwipeRecyclerView) findViewById(R.id.recycler_view);
@@ -83,38 +78,38 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
 //                deleteNote(adapter.getNote(viewHolder.getAdapterPosition()));
-                Intent intent = new Intent(MainActivity.this, EditNoteActivity.class);
+                Intent intent = new Intent(LotteryActivity.this, EditNoteActivity.class);
                 intent.putExtras(EditNoteActivity.newInstanceBundle(notes.get(viewHolder.getAdapterPosition()).getId()));
                  startActivity(intent);
             }
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(callback);
         itemTouchHelper.attachToRecyclerView(recyclerView);*/
-     swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-         @Override
-         public void onRefresh() {
+        swipeRefresh.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
 
-             new Thread(new Runnable() {
-                 @Override
-                 public void run() {
-                     try {
-                         Thread.sleep(2000);
-                     } catch (InterruptedException e) {
-                         e.printStackTrace();
-                     }
-                     runOnUiThread(new Runnable() {
-                         @Override
-                         public void run() {
-                             loadNotes();
-                             swipeRefresh.setRefreshing(false);
-                             ToastUtil.showMsg(MainActivity.this,"刷新成功");
-                         }
-                     });
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            Thread.sleep(2000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                loadNotes();
+                                swipeRefresh.setRefreshing(false);
+                                ToastUtil.showMsg(HomeActivity.this,"刷新成功");
+                            }
+                        });
 
-                 }
-             }).start();
-         }
-     });
+                    }
+                }).start();
+            }
+        });
     }
 
     @Override
@@ -159,13 +154,13 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             int height = ViewGroup.LayoutParams.MATCH_PARENT;
             // 添加左侧的，如果不添加，则左侧不会出现菜单。
          /*{
-                SwipeMenuItem addItem = new SwipeMenuItem(MainActivity.this).setBackground(R.drawable.selector_green)
+                SwipeMenuItem addItem = new SwipeMenuItem(LotteryActivity.this).setBackground(R.drawable.selector_green)
                         .setImage(R.drawable.ic_action_add)
                         .setWidth(width)
                         .setHeight(height);
                 swipeLeftMenu.addMenuItem(addItem); // 添加菜单到左侧。
 
-                SwipeMenuItem closeItem = new SwipeMenuItem(MainActivity.this).setBackground(R.drawable.selector_red)
+                SwipeMenuItem closeItem = new SwipeMenuItem(LotteryActivity.this).setBackground(R.drawable.selector_red)
                         .setImage(R.drawable.ic_action_close)
                         .setWidth(width)
                         .setHeight(height);
@@ -173,7 +168,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
             }*/
             // 添加右侧的，如果不添加，则右侧不会出现菜单。
             {
-                SwipeMenuItem deleteItem = new SwipeMenuItem(MainActivity.this).setBackground(R.drawable.selector_green)
+                SwipeMenuItem deleteItem = new SwipeMenuItem(HomeActivity.this).setBackground(R.drawable.selector_green)
 //                        .setImage(R.drawable.ic_action_delete)
                         .setText("编辑")
                         .setTextColor(Color.WHITE)
@@ -181,7 +176,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
                         .setHeight(height);
                 swipeRightMenu.addMenuItem(deleteItem);// 添加菜单到右侧。
 
-                SwipeMenuItem addItem = new SwipeMenuItem(MainActivity.this).setBackground(R.drawable.selector_red)
+                SwipeMenuItem addItem = new SwipeMenuItem(HomeActivity.this).setBackground(R.drawable.selector_red)
                         .setText("删除")
                         .setTextColor(Color.WHITE)
                         .setWidth(width)
@@ -204,18 +199,18 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
 
             if (direction == SwipeRecyclerView.RIGHT_DIRECTION) {
                 if (menuPosition==0){
-                    Intent intent = new Intent(MainActivity.this, EditNoteActivity.class);
-                    intent.putExtras(EditNoteActivity.newInstanceBundle(notes.get(position).getId()));
+                    Intent intent = new Intent(HomeActivity.this, EditHomeActivity.class);
+                    intent.putExtras(BundleTemp.ThemeIdBundle(notes.get(position).getId()));
                     startActivity(intent);
                 }
                 if (menuPosition==1){
-                    CustomDialog customDialog = new CustomDialog(MainActivity.this);
+                    CustomDialog customDialog = new CustomDialog(HomeActivity.this);
                     customDialog.setTitle("提醒");
                     customDialog.setMessage("你确定要删除吗?");
                     customDialog.setCancel("取消", new CustomDialog.IOnCancelListener() {
                         @Override
                         public void onCancel(CustomDialog dialog) {
-                            Toast.makeText(MainActivity.this, "取消成功！",Toast.LENGTH_SHORT).show();
+                            Toast.makeText(HomeActivity.this, "取消成功！",Toast.LENGTH_SHORT).show();
                         }
                     });
                     customDialog.setConfirm("确定", new CustomDialog.IOnConfirmListener(){
@@ -229,7 +224,7 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
 //                    deleteNote(adapter.getNote(position));
                 }
             } else if (direction == SwipeRecyclerView.LEFT_DIRECTION) {
-                Toast.makeText(MainActivity.this, "list第" + position + "; 左侧菜单第" + menuPosition, Toast.LENGTH_SHORT)
+                Toast.makeText(HomeActivity.this, "list第" + position + "; 左侧菜单第" + menuPosition, Toast.LENGTH_SHORT)
                         .show();
             }
         }
@@ -242,10 +237,12 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
         if (id == R.id.action_search) {
             return true;
         }
+
+        //noinspection SimplifiableIfStatement
+
 
         return super.onOptionsItemSelected(item);
     }
@@ -271,19 +268,19 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.add:
-                startActivity(new Intent(this, EditNoteActivity.class));
+                startActivity(new Intent(this, EditHomeActivity.class));
                 break;
         }
     }
 
     private void loadNotes() {
-        HttpUtil.sendOkHttpRequest(HttpUtil.BASE_URL + "lottery/findmlottery.do", new Callback() {
+        HttpUtil.sendOkHttpRequest(HttpUtil.BASE_URL + "theme/findtheme.do", new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        ToastUtil.showMsg(MainActivity.this,"无法连接服务器");
+                        ToastUtil.showMsg(HomeActivity.this,"无法连接服务器");
                     }
                 });
 
@@ -291,10 +288,10 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-            JSONArray jsonArray = JSONArray.parseArray( response.body().string());
-            List<Mainlottery> list = jsonArray.toJavaList(Mainlottery.class);
-                MainActivity.this.notes.clear();
-                MainActivity.this.notes.addAll(list);
+                JSONArray jsonArray = JSONArray.parseArray( response.body().string());
+                List<Theme> list = jsonArray.toJavaList(Theme.class);
+                HomeActivity.this.notes.clear();
+                HomeActivity.this.notes.addAll(list);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
@@ -314,18 +311,18 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
 //            }
 //            @Override
 //            protected void onPostExecute(List<Mainlottery> notes) {
-//                MainActivity.this.notes.clear();
-//                MainActivity.this.notes.addAll(notes);
+//                LotteryActivity.this.notes.clear();
+//                LotteryActivity.this.notes.addAll(notes);
 //                adapter.notifyDataSetChanged();
 //                //adapter.setNotes(notes);
 //            }
 //        }.execute();
 //    }
 
-    private void deleteNote(Mainlottery note) {
+    private void deleteNote(Theme note) {
         Map<String,String> param = new HashMap<String, String>();
-        param.put("ids",String.valueOf(note.getId()));
-        HttpUtil.sendOkHttpRequestText(HttpUtil.BASE_URL + "lottery/mlotterydelete.do", param, new Callback() {
+        param.put("id",String.valueOf(note.getId()));
+        HttpUtil.sendOkHttpRequestText(HttpUtil.BASE_URL + "theme/themedelete.do", param, new Callback() {
             @Override
             public void onFailure(@NotNull Call call, @NotNull IOException e) {
 
@@ -351,4 +348,6 @@ public class MainActivity extends AppCompatActivity implements OnClickListener {
 //            }
 //        }.execute(note);
     }
+
+
 }

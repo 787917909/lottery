@@ -8,6 +8,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
+import android.content.res.Resources;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -17,15 +18,18 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.room.util.StringUtil;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.example.qiang.R;
 import com.example.qiang.entity.Mainlottery;
+import com.example.qiang.entity.People;
 import com.example.qiang.fireWorks.FireworkView;
 import com.example.qiang.gson.Winners;
 import com.example.qiang.http.HttpUtil;
@@ -35,6 +39,8 @@ import com.example.qiang.websocket.Client;
 import com.example.qiang.websocket.ClientService;
 import com.google.common.base.Joiner;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+
 import org.jetbrains.annotations.NotNull;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -55,12 +61,14 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
     private static final String TAG = "LetteryActivity";
     private List<String> datas = new ArrayList<>();
     private List<String> winnners = new ArrayList<>();
+    private List<String> workid = new ArrayList<>();
     private boolean running;
     private boolean wasrunning;
     private boolean flag =false;
+    private boolean end =false;
     private int temp1 ;
     private int count = 0;
-    private int level ;
+    private int level=0;
     private TextView award1;
     private TextView award2;
     private TextView award3;
@@ -74,25 +82,33 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
   private TextView textView;
     private TextView textView1;
     private TextView textView2;
+    private List<TextView> textViews = new ArrayList<TextView>();
   private TextView Winner1;
   private TextView Winner2;
    private Winners win;
   private   String temp[];
-  private TextView Winner3;
+    private   String tempwin[];
+  private TextView jiangping;
   private FireworkView fv;
     protected ActionBar mActionBar;
-   private List<Integer> tempnumber = new ArrayList<>();
+   private int tempnumber;
     private Mainlottery note;
     final Handler handler = new Handler();
     Thread myThread;
     Thread webSocketThread;
     Boolean flagadd;
     private Long noteId;
+    private Long meetingId;
+     private int[] random;
+    private List<Mainlottery> mainlist = new ArrayList<>();
+    private String wintemp="";
+    private String[] wintempshuzu;
+    boolean k;
 
     private ServiceConnection serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceConnected(ComponentName componentName, IBinder iBinder) {
-            Log.e("MainActivity", "服务与活动成功绑定");
+            Log.e("LotteryActivity", "服务与活动成功绑定");
             binder = (ClientService.ClientBinder) iBinder;
             clientService = binder.getService();
             client = clientService.client;
@@ -100,97 +116,67 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
-            Log.e("MainActivity", "服务与活动成功断开");
+            Log.e("LotteryActivity", "服务与活动成功断开");
         }
     };
 
-    private class LotteryReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String message=intent.getStringExtra("message").trim();
-
-            if (message.contains("-")&& message.split("-")[1].equals(noteId.toString())){
-
-                level=Integer.valueOf(message.split("-")[0]);
-                running=true;
-                wasrunning =true;
-                if (temp1==level&&!note.isEndless()){
-                    winnners.clear();
-                }
-                if (level==2){
-                    if (tempnumber.get(2)==3){
-                        textView2.setVisibility(View.VISIBLE);
-                        textView1.setVisibility(View.VISIBLE);}
-                    if (tempnumber.get(2)==2) {
-                        textView1.setVisibility(View.VISIBLE);
-                        textView2.setVisibility(View.GONE);}
-                    if (tempnumber.get(2)==1) {
-                        textView1.setVisibility(View.GONE);
-                        textView2.setVisibility(View.GONE);}
-                }
-                if (level==1){
-                    if (tempnumber.get(1)==3){
-                        textView2.setVisibility(View.VISIBLE);
-                        textView1.setVisibility(View.VISIBLE);}
-                    if (tempnumber.get(1)==2) {
-                        textView1.setVisibility(View.VISIBLE);
-                        textView2.setVisibility(View.GONE);}
-                    if (tempnumber.get(1)==1) {
-                        textView1.setVisibility(View.GONE);
-                        textView2.setVisibility(View.GONE);}}
-
-                if (level==0) {
-                    if (tempnumber.get(0) == 3) {
-                        textView2.setVisibility(View.VISIBLE);
-                        textView1.setVisibility(View.VISIBLE);
-                    }
-                    if (tempnumber.get(0) == 2) {
-                        textView1.setVisibility(View.VISIBLE);
-                        textView2.setVisibility(View.GONE);
-                    }
-                    if (tempnumber.get(0) == 1) {
-                        textView1.setVisibility(View.GONE);
-                        textView2.setVisibility(View.GONE);
-                    }
-                }
-                handler.post(webSocketThread);
-//                ToastUtil.showMsg(LetteryActivity.this,"hahahah");
-            }else if(message.contains(",")){
-                String[] data = message.split(",");
-                Log.i(TAG, "onReceive: "+data[1]);
-                String[] name = data[0].split(" +");
-                if (data[1].equals(noteId.toString())) {
-
-//                    ToastUtil.showMsg(LetteryActivity.this, "aoligei"+name.toString()+level);
-                    Log.i(TAG, "onReceive: "+name.length);
-                    running = false;
-                    handler.removeCallbacks(webSocketThread);
-                    if (name.length==1){
-                    textView.setText(name[0]);}else if (name.length==2){
-                        textView.setText(name[0]);textView1.setText(name[1]);
-                    }else if (name.length==3){
-                        textView.setText(name[0]);textView1.setText(name[1]);textView2.setText(name[2]);
-                    }
-                    if (level==2){
-                        Winner1.setText(Joiner.on("   ").join(name));
-                        winnners.addAll(Arrays.asList(name));
-                        fv.setFireworkCount(2);
-                        fv.showFirework();
-                    }else if (level==1){
-                        Winner2.setText(Joiner.on("   ").join(name));
-                        winnners.addAll(Arrays.asList(name));
-                        fv.setFireworkCount(3);
-                        fv.showFirework();
-                    } else if (level==0) {
-                        Winner3.setText(Joiner.on("   ").join(name));
-                        winnners.addAll(Arrays.asList(name));
-                        fv.setFireworkCount(5);
-                        fv.showFirework();
-                    }
-                }
-            }
-        }
-    }
+//    private class LotteryReceiver extends BroadcastReceiver {
+//        @Override
+//        public void onReceive(Context context, Intent intent) {
+//            String message=intent.getStringExtra("message").trim();
+//
+//            if (message.contains("-")&& message.split("-")[1].equals(noteId.toString())){
+//
+//                level=Integer.valueOf(message.split("-")[0]);
+//                running=true;
+//                wasrunning =true;
+//                if (temp1==level&&!note.isEndless()){
+//                    winnners.clear();
+//                }
+//
+//
+//                handler.post(webSocketThread);
+////                ToastUtil.showMsg(LetteryActivity.this,"hahahah");
+//            }else if(message.contains(",")) {
+//                String[] data = message.split(",");
+//                Log.i(TAG, "onReceive: " + data[1]);
+//                String[] name = data[0].split(" +");
+//                if (data[1].equals(noteId.toString())) {
+//
+////                    ToastUtil.showMsg(LetteryActivity.this, "aoligei"+name.toString()+level);
+//                    Log.i(TAG, "onReceive: " + name.length);
+//                    running = false;
+//                    handler.removeCallbacks(webSocketThread);
+//                    if (name.length == 1) {
+//                        textView.setText(name[0]);
+//                    } else if (name.length == 2) {
+//                        textView.setText(name[0]);
+//                        textView1.setText(name[1]);
+//                    } else if (name.length == 3) {
+//                        textView.setText(name[0]);
+//                        textView1.setText(name[1]);
+//                        textView2.setText(name[2]);
+//                    }
+//                    if (level == 2) {
+//                        Winner1.setText(Joiner.on("   ").join(name));
+//                        winnners.addAll(Arrays.asList(name));
+//                        fv.setFireworkCount(2);
+//                        fv.showFirework();
+//                    } else if (level == 1) {
+//                        Winner2.setText(Joiner.on("   ").join(name));
+//                        winnners.addAll(Arrays.asList(name));
+//                        fv.setFireworkCount(3);
+//                        fv.showFirework();
+//                    } else if (level == 0) {
+//                        Winner3.setText(Joiner.on("   ").join(name));
+//                        winnners.addAll(Arrays.asList(name));
+//                        fv.setFireworkCount(5);
+//                        fv.showFirework();
+//                    }
+//                }
+//            }
+//        }
+//    }
 
     public static final String EXTRA_NOTE_ID = "EXTRA_NOTE_ID";
 
@@ -200,10 +186,10 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_lettery);
-        initdata();
-        doRegisterReceiver();
-        startClientService();
-        bindService();
+
+//        doRegisterReceiver();
+//        startClientService();
+//        bindService();
         Log.d(TAG, "onCreate: ");
 ////          data= new String[]{"Fans","Minard","Stephen zheng","蘇振輝","陳世豪","Ace Lai", "曾國清","Loki","Morgan","Henry","Henk", "Elva", "Jay", "Sophia", "Jeff", "Carrie"
 ////                  , "Rio", "Brian","Ann","Cila","Alice", "Tony", "Hardy",
@@ -215,20 +201,21 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
         win = new Winners();
         searchData = findViewById(R.id.searchData);
         editText = findViewById(R.id.addData);
-        textView = findViewById(R.id.DataView);
-        textView1= findViewById(R.id.DataView1);
-        textView2= findViewById(R.id.DataView2);
+        textView = findViewById(R.id.DataView1);
+        textView1= findViewById(R.id.DataView2);
+        textView2= findViewById(R.id.DataView3);
         chushihua = findViewById(R.id.chushihua);
         AddItem = findViewById(R.id.Add);
         ClearData = findViewById(R.id.clearData);
         Lettery = findViewById(R.id.Start);
-        Winner1 = findViewById(R.id.Winner1);
-        Winner2 = findViewById(R.id.Winner2);
-        Winner3 = findViewById(R.id.Winner3);
+        jiangping = findViewById(R.id.jiangping);
+//        Winner1 = findViewById(R.id.Winner1);
+//        Winner2 = findViewById(R.id.Winner2);
+//        Winner3 = findViewById(R.id.Winner3);
         WinningList = findViewById(R.id.zhongjiang);
-        award1 = findViewById(R.id.First);
-        award2 = findViewById(R.id.Second);
-        award3 = findViewById(R.id.Third);
+//        award1 = findViewById(R.id.First);
+//        award2 = findViewById(R.id.Second);
+//        award3 = findViewById(R.id.Third);
         fv = findViewById(R.id.fv);
         running = false;
         AddItem.setOnClickListener(this);
@@ -240,20 +227,23 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
         mActionBar = getSupportActionBar();
         mActionBar.setDisplayHomeAsUpEnabled(true);
         Intent intent = getIntent();
-
         if (intent.hasExtra(EXTRA_NOTE_ID)) {
             noteId = intent.getLongExtra(EXTRA_NOTE_ID, -1);
+        }
+        if (intent.hasExtra("meetingId")) {
+            meetingId = intent.getLongExtra("meetingId", -1);
         }
         editText.setVisibility(View.GONE);
         findViewById(R.id.close).setVisibility(View.GONE);
         if (noteId!=null) {
             loadNote();
         }
+        initdata();
 
         webSocketThread = new Thread(){
             @Override
             public void run() {
-                int[] random = new int[tempnumber.get(level)];
+                int[] random = new int[1];
                 Set<Integer> set=new LinkedHashSet();
                 boolean panduan;
                 while(true){
@@ -262,7 +252,7 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
                     if(!panduan){
                         continue;
                     }
-                    if(set.size()>=tempnumber.get(level)){
+                    if(set.size()>=tempnumber){
                         break;
                     }
                 }
@@ -290,150 +280,79 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
         myThread = new Thread(){
             @Override
             public void run() {
-                int[] random = new int[tempnumber.get(level)];
-                Set<Integer> set=new LinkedHashSet();
-                boolean panduan;
-                while(true){
-                    int z=(int)(Math.random()*datas.size());
-                    panduan=set.add(z);
-                    if(!panduan){
-                        continue;
+
+                if (running ) {
+                    random  = new int[tempnumber];
+                    temp1=0;
+                    Set<Integer> set=new LinkedHashSet();
+                    boolean panduan;
+                    while(true){
+                        int z=(int)(Math.random()*datas.size());
+                        panduan=set.add(z);
+                        if(!panduan){
+                            continue;
+                        }
+                        if(set.size()>=tempnumber){
+                            break;
+                        }
                     }
-                    if(set.size()>=tempnumber.get(level)){
-                        break;
+                    Object[] temp = set.toArray();
+                    for(int i = 0;i<temp.length;i++) {
+                        random[i] = (int)temp[i];
                     }
-                }
-                Object[] temp = set.toArray();
-                for(int i = 0;i<temp.length;i++) {
-                    random[i] = (int)temp[i];
-                }
-                if (running && (count < 200)) {
-                    count++;
+
+
                     Log.d(TAG, "run: "+random.length);
-                    textView.setText(datas.get(random[0]));
-                    if (random.length>1){
-                    textView1.setText(datas.get(random[1]));
-                        if (random.length>2){
-                            textView2.setText(datas.get(random[2]));}
+//                    textView.setText(datas.get(random[0]));
+//                    if (random.length>1){
+//                    textView1.setText(datas.get(random[1]));
+//                        if (random.length>2){
+//                            textView2.setText(datas.get(random[2]));}
+//                    }
+
+                    for (TextView textView:textViews)
+                    {
+                       textView.setText(datas.get(random[temp1]).split("\\(")[0]);
+                      temp1++;
                     }
 
                     handler.postDelayed(this,10);
-                }else {
-                    wasrunning = false;
                 }
-                if (running && (count == 200)) {
-                    wasrunning=false;
-                    if (level==2){
-                        if (tempnumber.get(2)==3){
-                        Winner1.setText(textView.getText().toString()+"  "+textView1.getText().toString()+"  "+textView2.getText().toString());
-                      /*  Winner2.setText(textView1.getText().toString());
-                        Winner3.setText(textView2.getText().toString());*/
-                            winnners.add(textView.getText().toString());
-                            winnners.add(textView1.getText().toString());
-                            winnners.add(textView2.getText().toString());
-                        datas.remove(textView.getText().toString());
-                        datas.remove(textView1.getText().toString());
-                        datas.remove(textView2.getText().toString());}
-                            if (tempnumber.get(2)==2) {
-                                textView2.setVisibility(View.GONE);
-                                Winner1.setText(textView.getText().toString() + "  " + textView1.getText().toString());
-                      /*  Winner2.setText(textView1.getText().toString());
-                        Winner3.setText(textView2.getText().toString());*/
-                                winnners.add(textView.getText().toString());
-                                winnners.add(textView1.getText().toString());
-
-                                datas.remove(textView.getText().toString());
-                                datas.remove(textView1.getText().toString());
-                            }
-                            if (tempnumber.get(2)==1) {
-                                Winner1.setText(textView.getText().toString());
-                      /*  Winner2.setText(textView1.getText().toString());
-                        Winner3.setText(textView2.getText().toString());*/
-                                winnners.add(textView.getText().toString());
-
-                                datas.remove(textView.getText().toString());
-                            }
-                            fv.setFireworkCount(2);
-                            fv.showFirework();
-//                        if (tempnumber.get(1)==3){
-//                            textView2.setVisibility(View.VISIBLE);
-//                            textView1.setVisibility(View.VISIBLE);}
-//                        if (tempnumber.get(1)==2) {
-//                            textView1.setVisibility(View.VISIBLE);
-//                            textView2.setVisibility(View.GONE);}
-//                        if (tempnumber.get(1)==1) {
-//                            textView1.setVisibility(View.GONE);
-//                            textView2.setVisibility(View.GONE);}
-                        level--;
-                    }
-                    else if (level==1){
-                        fv.setFireworkCount(3);
-                        fv.showFirework();
-                        if (tempnumber.get(1)==3){
-                            Winner2.setText(textView.getText().toString()+"  "+textView1.getText().toString()+"  "+textView2.getText().toString());
-                      /*  Winner2.setText(textView1.getText().toString());
-                        Winner3.setText(textView2.getText().toString());*/
-                            winnners.add(textView.getText().toString());
-                            winnners.add(textView1.getText().toString());
-                            winnners.add(textView2.getText().toString());
-                            datas.remove(textView.getText().toString());
-                            datas.remove(textView1.getText().toString());
-                            datas.remove(textView2.getText().toString());}
-                        if (tempnumber.get(1)==2) {
-                            Winner2.setText(textView.getText().toString() + "  " + textView1.getText().toString());
-                      /*  Winner2.setText(textView1.getText().toString());
-                        Winner3.setText(textView2.getText().toString());*/
-                            winnners.add(textView.getText().toString());
-                            winnners.add(textView1.getText().toString());
-
-                            datas.remove(textView.getText().toString());
-                            datas.remove(textView1.getText().toString());
-                        }
-                        if (tempnumber.get(1)==1) {
-                            Winner2.setText(textView.getText().toString());
-                      /*  Winner2.setText(textView1.getText().toString());
-                        Winner3.setText(textView2.getText().toString());*/
-                            winnners.add(textView.getText().toString());
-                            datas.remove(textView.getText().toString());
-                        }
-                        level--;
-                        Log.i("onReceive", "run: duoci");
-                        clientService.sendMsg(Winner2.getText()+","+noteId.toString());
-                    }else if (level==0){
+                if (!running && end ) {
                         fv.setFireworkCount(5);
                         fv.showFirework();
-                        if (tempnumber.get(0)==3){
-                            Winner3.setText(textView.getText().toString()+"  "+textView1.getText().toString()+"  "+textView2.getText().toString());
-                      /*  Winner2.setText(textView1.getText().toString());
-                        Winner3.setText(textView2.getText().toString());*/
-                            winnners.add(textView.getText().toString());
-                            winnners.add(textView1.getText().toString());
-                            winnners.add(textView2.getText().toString());
+                        int k = 0;
+                    for (TextView textView:textViews)
+                    {
+                       winnners.add(datas.get(random[k]));
 
-                            datas.remove(textView.getText().toString());
-                            datas.remove(textView1.getText().toString());
-                            datas.remove(textView2.getText().toString());}
-                        if (tempnumber.get(0)==2) {
-                            Winner3.setText(textView.getText().toString() + "  " + textView1.getText().toString());
-                      /*  Winner2.setText(textView1.getText().toString());
-                        Winner3.setText(textView2.getText().toString());*/
-                            winnners.add(textView.getText().toString());
-                            winnners.add(textView1.getText().toString());
-                            datas.remove(textView.getText().toString());
-                            datas.remove(textView1.getText().toString());
-                        }
-                        if (tempnumber.get(0)==1) {
-                            Winner3.setText(textView.getText().toString());
-                      /*  Winner2.setText(textView1.getText().toString());
-                        Winner3.setText(textView2.getText().toString());*/
-                            winnners.add(textView.getText().toString());
-                            datas.remove(textView.getText().toString());
-                        }
-                        clientService.sendMsg(Winner3.getText()+","+noteId.toString());
-                        level=tempnumber.size()-1;
+                        k++;
+                    }
+                    jiangping.setVisibility(View.VISIBLE);
+                    jiangping.setText("奖品："+note.getAward1());
+                    datas.remove(winnners);
+//                        if (tempnumber==3){
+//                            winnners.add(textView.getText().toString());
+//                            winnners.add(textView1.getText().toString());
+//                            winnners.add(textView2.getText().toString());
+//                            datas.remove(textView.getText().toString());
+//                            datas.remove(textView1.getText().toString());
+//                            datas.remove(textView2.getText().toString());}
+//                        if (tempnumber==2) {
+//                            winnners.add(textView.getText().toString());
+//                            winnners.add(textView1.getText().toString());
+//                            datas.remove(textView.getText().toString());
+//                            datas.remove(textView1.getText().toString());
+//                        }
+//                        if (tempnumber==1) {
+//                            winnners.add(textView.getText().toString());
+//                            datas.remove(textView.getText().toString());
+//                        }
+//                        clientService.sendMsg(Winner3.getText()+","+noteId.toString());
+//                        level=tempnumber.size()-1;
 //                        textView1.setVisibility(View.VISIBLE);
 //                        textView2.setVisibility(View.VISIBLE);
-                        WinningList.setVisibility(View.VISIBLE);
+
                         win.setNoteid(Integer.valueOf(noteId.toString()));
                         win.setWinjson(Joiner.on(",").join(winnners));
                         note.setWinjson(win.getWinjson());
@@ -447,7 +366,14 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
 
                             @Override
                             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-
+                                      runOnUiThread(
+                                              new Runnable() {
+                                                  @Override
+                                                  public void run() {
+                                                      WinningList.setVisibility(View.VISIBLE);
+                                                  }
+                                              }
+                                      );
                             }
                         });
 //                        if (DataSupport.where("noteid=?",noteId.toString()).find(Winners.class).size()!=0){
@@ -464,12 +390,12 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
                             datas.addAll(winnners);
                         }
                         Toast.makeText(LetteryActivity.this,"抽奖完毕", Toast.LENGTH_SHORT).show();
-                    }
+
+
                     handler.removeCallbacks(this);
-                    Lettery.setVisibility(View.VISIBLE);
+                    Log.d(TAG, "一直在运行的可怜人");
                 }
-                Log.d(TAG, "一直在运行的可怜人");
-            }
+                }
         };}
 
 
@@ -477,30 +403,46 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
         this.note = note;
         Log.d(TAG, "setNote: "+note.isEndless());
         if (note.getPeoplefirst()!=0){
-            tempnumber.add(note.getPeoplefirst());
+            tempnumber=note.getPeoplefirst();
         }
-        if (note.getPeoplesecond()!=0){
-            tempnumber.add(note.getPeoplesecond());
-        }else {
-            findViewById(R.id.Second).setVisibility(View.INVISIBLE);
-            Winner2.setVisibility(View.INVISIBLE);
-        }
-        if (note.getPeoplethird()!=0){
-            tempnumber.add(note.getPeoplethird());
-        }else {
-            findViewById(R.id.First).setVisibility(View.INVISIBLE);
-            Winner1.setVisibility(View.INVISIBLE);
-        }
-        level = tempnumber.size()-1;
+        textViews=getAllTextView(tempnumber);
+
+//        level = tempnumber.size()-1;
         setTitle(note.getTitle());
-        award1.setText(note.getAward3());
-        award1.append(":");
-        award2.setText(note.getAward2());
-        award2.append(":");
-        award3.setText(note.getAward1());
-        award3.append(":");
-        temp1=level;
+        Resources res=getResources();
+        if (note.getPeoplefirst()<40){
+            for (int j=note.getPeoplefirst()+1;j<=40;j++){
+                int id=res.getIdentifier("DataView"+j,"id",getPackageName());
+                TextView TextView= (TextView) findViewById(id);//关联控件
+                TextView.setVisibility(View.GONE);
+            }
+        }
+        if (note.getWinjson().equals("")){
+            Lettery.setVisibility(View.VISIBLE);
+        }
+//        award1.setText(note.getAward3());
+//        award1.append(":");
+//        award2.setText(note.getAward2());
+//        award2.append(":");}
+//        award3.setText(note.getAward1());
+//        award3.append(":");
+//        temp1=level;
     }
+
+    public List<TextView> getAllTextView(int k){
+        //定义一个存储按钮的list数组(0-68按钮)
+        List<TextView> editTexts=new ArrayList<TextView>();
+        //获取R 资源
+        Resources res=getResources();
+        //下面用for循环进去findviewid
+        for (int i=1;i<=k;i++){
+            int id=res.getIdentifier("DataView"+i,"id",getPackageName());
+            TextView TextView= (TextView) findViewById(id);//关联控件
+            editTexts.add(TextView);
+        }
+        return editTexts;
+    }
+
 
     private void loadNote(){
         Map<String,String> param = new HashMap<String,String>();
@@ -514,15 +456,49 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
 
             @Override
             public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-
                 final Mainlottery note = new Gson().fromJson(response.body().string(),Mainlottery.class);
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
                         setNote(note);
+                        Map<String,String> param2 = new HashMap<String, String>();
+                        param2.put("id",noteId.toString());
+                        HttpUtil.sendOkHttpRequestText(HttpUtil.BASE_URL + "lottery/findmlotterybyid.do", param2, new Callback() {
+                            @Override
+                            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
+                            }
+
+                            @Override
+                            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                                final Mainlottery note = new Gson().fromJson(response.body().string(),Mainlottery.class);
+                                if (!note.getWinjson().equals("")){
+                                    temp = note.getWinjson().split(",");
+
+                                    winnners.clear();
+                                    winnners.addAll( Arrays.asList(temp));
+                                    if (note.isEndless()) {
+                                        datas.removeAll(winnners);
+                                    }
+                                    runOnUiThread(new Runnable() {
+                                        @Override
+                                        public void run() {
+                                            jiangping.setVisibility(View.VISIBLE);
+                                            jiangping.setText("奖品："+note.getAward1());
+                                            WinningList.setVisibility(View.VISIBLE);
+                                            int j=0;
+                                            for (TextView textView:textViews){
+                                                textView.setText(winnners.get(j).split("\\(")[0]);
+                                                j++;
+                                            }
+                                        }
+                                    });
+                                }
+
+                            }
+                        });
                     }
                 });
-
             }
         });
 //        new AsyncTask<Void, Void, Note>() {
@@ -558,9 +534,9 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
      * 动态注册广播
      */
     private void doRegisterReceiver() {
-        LotteryReceiver receiver = new LotteryReceiver();
+//        LotteryReceiver receiver = new LotteryReceiver();
         IntentFilter filter = new IntentFilter("com.xch.servicecallback.content");
-        registerReceiver(receiver, filter);
+//        registerReceiver(receiver, filter);
         Log.d(TAG, "doRegisterReceiver: ");
 
     }
@@ -574,32 +550,44 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
     @Override
     protected void onResume() {
         super.onResume();
-        Map<String,String> param = new HashMap<String, String>();
-        param.put("id",noteId.toString());
-        HttpUtil.sendOkHttpRequestText(HttpUtil.BASE_URL + "lottery/findmlotterybyid.do", param, new Callback() {
-            @Override
-            public void onFailure(@NotNull Call call, @NotNull IOException e) {
-
-            }
-
-            @Override
-            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-                final Mainlottery note = new Gson().fromJson(response.body().string(),Mainlottery.class);
-                if (!note.getWinjson().equals("")){
-                temp = note.getWinjson().split(",");
-                winnners.clear();
-                winnners .addAll( Arrays.asList(temp));
-                    datas.removeAll(winnners);
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            WinningList.setVisibility(View.VISIBLE);
-                        }
-                    });
-            }
-
-            }
-        });
+//        Map<String,String> param = new HashMap<String, String>();
+//        param.put("id",noteId.toString());
+//        HttpUtil.sendOkHttpRequestText(HttpUtil.BASE_URL + "lottery/findmlotterybyid.do", param, new Callback() {
+//            @Override
+//            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+//
+//            }
+//
+//            @Override
+//            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+//                final Mainlottery note = new Gson().fromJson(response.body().string(),Mainlottery.class);
+//                if (!note.getWinjson().equals("")){
+//                temp = note.getWinjson().split(",");
+//                winnners.clear();
+//
+////                for (String a:temp){
+////                    if(note.isEndless()){
+////                        datas.remove(a);
+////                    }
+////                    winnners.add(a.split("\\(")[0]);
+////                }
+//                winnners.addAll( Arrays.asList(temp));
+//                    datas.removeAll(winnners);
+//                    runOnUiThread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            WinningList.setVisibility(View.VISIBLE);
+//                            int j=0;
+//                            for (TextView textView:textViews){
+//                                textView.setText(winnners.get(j).split("\\(")[0]);
+//                                j++;
+//                            }
+//                        }
+//                    });
+//            }
+//
+//            }
+//        });
         }
 //        DataSupport.deleteAll(Winners.class,"noteid=?",noteId.toString());
 
@@ -674,30 +662,98 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
 
     public void initdata(){
 
+       HashMap<String,String> param = new HashMap<>();
+       param.put("meetingid",meetingId.toString());
+        HttpUtil.sendOkHttpRequestText(HttpUtil.BASE_URL + "lottery/findmlotterybymid.do", param, new Callback() {
+            @Override
+            public void onFailure(@NotNull Call call, @NotNull IOException e) {
+
+            }
+
+            @Override
+            public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                JSONArray jsonArray = JSONArray.parseArray(response.body().string());
+               mainlist = jsonArray.toJavaList(Mainlottery.class);
+               int tempnum=1;
+               for (Mainlottery ha : mainlist){
+                   if (!ha.getWinjson().equals("")) {
+                       if (tempnum < mainlist.size()) {
+                           wintemp = wintemp + ha.getWinjson() + ",";
+                       } else {
+                           wintemp = wintemp + ha.getWinjson();
+                       }
+                   }
+                   tempnum++;
+               }
+               if (!wintemp.equals("")){
+                   wintempshuzu = wintemp.trim().split(",");
+               for (String temp:wintempshuzu){
+                   workid.add(temp.substring(temp.indexOf("(")+1,temp.indexOf(")")));
+                   Log.d(TAG, "onResponse: "+temp.substring(temp.indexOf("(")+1,temp.indexOf(")")));
+               }}
+                HttpUtil.sendOkHttpRequest(HttpUtil.BASE_URL+"lottery/findlotteryp.do",new Callback() {
+                    @Override
+                    public void onFailure(@NotNull Call call, @NotNull IOException e) {
+                    }
+
+                    @Override
+                    public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+                        JSONArray jsonArray = JSONArray.parseArray(response.body().string());
+                        Gson gson = new Gson();
+                        List<People> list = jsonArray.toJavaList(People.class);
+                        datas.clear();
+                        k = true;
+                        for (People a:list){
+                            for (String  ha:workid) {
+                                if (ha.trim().equals(a.getWorkid().trim())){
+                                    k=false;
+                                }
+                            }
+                            if (k==true) {
+                                datas.add(a.getName() + "(" + a.getWorkid() + ")");
+                            }
+                       k=true;
+                        }
+                    }
+                });
+            }
+        });
+
+
 //       String address = "http://10.132.212.167:8080/bird/lottery/findlotteryp.do";
-       HttpUtil.sendOkHttpRequest(HttpUtil.BASE_URL+"lottery/findlotteryp.do",new Callback() {
-           @Override
-           public void onFailure(@NotNull Call call, @NotNull IOException e) {
-           }
-
-           @Override
-           public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
-               datas.clear();
-                datas.addAll(Arrays.asList(response.body().string().trim().split(",")));
-                if (winnners.size()!=0){
-                    datas.removeAll(winnners);
-                    WinningList.setVisibility(View.VISIBLE);
-                }
-           }
-       });
-
+//       HttpUtil.sendOkHttpRequest(HttpUtil.BASE_URL+"lottery/findlotteryp.do",new Callback() {
+//           @Override
+//           public void onFailure(@NotNull Call call, @NotNull IOException e) {
+//           }
+//
+//           @Override
+//           public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
+//               JSONArray jsonArray = JSONArray.parseArray(response.body().string());
+//               Gson gson = new Gson();
+//               List<People> list = jsonArray.toJavaList(People.class);
+//               datas.clear();
+//               for (People a:list){
+//                   datas.add(a.getName()+"("+a.getWorkid()+")");
+//               }
+////                datas.addAll(Arrays.asList(response.body().string().trim().split(",")));
+////                if (winnners.size()!=0){
+////                    datas.removeAll(winnners);
+////                    runOnUiThread(new Runnable() {
+////                        @Override
+////                        public void run() {
+////                            WinningList.setVisibility(View.VISIBLE);
+////                        }
+////                    });
+////                }
+//           }
+//       });
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        clientService.onDestroy();
-        handler.removeCallbacks(webSocketThread);
+//        clientService.onDestroy();
+//        handler.removeCallbacks(webSocketThread);
     }
 
     @Override
@@ -737,7 +793,7 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
                     public void onResponse(@NotNull Call call, @NotNull Response response) throws IOException {
                         JSONObject jsonObject = JSONObject.parseObject(response.body().string());
                         if (jsonObject.getBoolean("errres")){
-                            datas.addAll(winnners);
+//                            datas.addAll(winnners);
                             winnners.clear();
                             runOnUiThread(new Runnable() {
                                 @Override
@@ -749,59 +805,21 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
                         }
                     }
                 });
-
-//                if (DataSupport.deleteAll(Winners.class)!=0){
-//                    ToastUtil.showMsg(LetteryActivity.this,"OK");
-//                    datas.addAll(winnners);
-//                    winnners.clear();
-//                }
-
                 break;
             case R.id.zhongjiang:
                 AlertDialog.Builder builder1 = new AlertDialog.Builder(this);
-                builder1.setTitle(note.getTitle());
+                builder1.setTitle(note.getTitle()+":"+note.getAward1());
                 StringBuilder stringBuilder = new StringBuilder();
-                    int i=0,j=0,k=0;
+                int i=0,j=0,k=0;
                 for(String a :winnners){
-                    if (note.getPeoplethird()!=0&&j<note.getPeoplethird()){
-
-                            if (j % note.getPeoplethird() == 0 && j != 0) {
-                                stringBuilder.append("\r\n");
-                            }
-                            if (j % note.getPeoplethird() == 0) {
-                                stringBuilder.append(note.getAward3() + ":   ");
-                            }
-                            stringBuilder.append(a.toString()+"     ");
-                            j++;
-                        if(j==note.getPeoplethird()){
+                        if (i%2==0&&i!=0){
                             stringBuilder.append("\r\n");
                         }
+                        stringBuilder.append(a+"     ");
+                        i++;}
 
-                    }else if(note.getPeoplesecond()!=0&&k<note.getPeoplesecond()){
-
-                            if (k%note.getPeoplesecond()==0&&k!=0){
-                                stringBuilder.append("\r\n");
-                            }
-                            if (k%note.getPeoplesecond()==0){
-                                stringBuilder.append(note.getAward2()+":   ");}
-                            stringBuilder.append(a.toString()+"     ");
-                            k++;
-                        if(k==note.getPeoplesecond()){
-                            stringBuilder.append("\r\n");
-                        }
-
-                    }else {
-                    if (i%note.getPeoplefirst()==0&&i!=0){
-                        stringBuilder.append("\r\n");
-                    }
-                    if (i%note.getPeoplefirst()==0){
-                        stringBuilder.append(note.getAward1()+":   ");}
-
-                        stringBuilder.append(a.toString()+"     ");
-                    i++;
-                }}
                 builder1.setMessage(
-                    stringBuilder.toString()
+                        stringBuilder.toString()
                 );
                 builder1.setCancelable(true);
                 builder1.setPositiveButton("OK", new DialogInterface.OnClickListener() {
@@ -889,67 +907,72 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
                 }
                 break;
             case R.id.Start:
-                if (!wasrunning){
-                    clientService.sendMsg(level+"-"+noteId.toString());
+                if(running){
+                    running=false;
+                    end = true;
+                    Lettery.setVisibility(View.INVISIBLE);
+                }else {
+                    Lettery.setText("停止抽奖");
+//                    clientService.sendMsg(level+"-"+noteId.toString());
                 if(datas.size()>=note.getTotalpeople()){
                     count = 0;
                     running = true;
-                    wasrunning = true;
-                    Lettery.setVisibility(View.INVISIBLE);
 
-                    if (temp1==level&&!note.isEndless()){
 
+                    if (!note.isEndless()){
                         winnners.clear();
                     }
-                    if (level==2){
-                        if (tempnumber.get(2)==3){
-                            textView2.setVisibility(View.VISIBLE);
-                            textView1.setVisibility(View.VISIBLE);}
-                        if (tempnumber.get(2)==2) {
-                            textView1.setVisibility(View.VISIBLE);
-                            textView2.setVisibility(View.GONE);}
-                        if (tempnumber.get(2)==1) {
-                            textView1.setVisibility(View.GONE);
-                            textView2.setVisibility(View.GONE);}
-                    }
-                  if (level==1){
-                    if (tempnumber.get(1)==3){
-                        textView2.setVisibility(View.VISIBLE);
-                        textView1.setVisibility(View.VISIBLE);}
-                    if (tempnumber.get(1)==2) {
-                        textView1.setVisibility(View.VISIBLE);
-                        textView2.setVisibility(View.GONE);}
-                    if (tempnumber.get(1)==1) {
-                        textView1.setVisibility(View.GONE);
-                        textView2.setVisibility(View.GONE);}}
-
-                  if (level==0) {
-                      if (tempnumber.get(0) == 3) {
-                          textView2.setVisibility(View.VISIBLE);
-                          textView1.setVisibility(View.VISIBLE);
-                      }
-                      if (tempnumber.get(0) == 2) {
-                          textView1.setVisibility(View.VISIBLE);
-                          textView2.setVisibility(View.GONE);
-                      }
-                      if (tempnumber.get(0) == 1) {
-                          textView1.setVisibility(View.GONE);
-                          textView2.setVisibility(View.GONE);
-                      }
-                  }
-                    if (level==tempnumber.size()-1){
-                        Winner1.setText("");
-                        Winner2.setText("");
-                        Winner3.setText("");
-                        textView1.setText("");
-                    if (tempnumber.get(tempnumber.size()-1)==2){
-                        textView2.setVisibility(View.GONE);
-                    }
-                    if (tempnumber.get(tempnumber.size()-1)==1){
-                        textView1.setVisibility(View.GONE);
-                        textView2.setVisibility(View.GONE);
-                    }}
                     handler.post(myThread);
+
+//                    if (level==2){
+//                        if (tempnumber.get(2)==3){
+//                            textView2.setVisibility(View.VISIBLE);
+//                            textView1.setVisibility(View.VISIBLE);}
+//                        if (tempnumber.get(2)==2) {
+//                            textView1.setVisibility(View.VISIBLE);
+//                            textView2.setVisibility(View.GONE);}
+//                        if (tempnumber.get(2)==1) {
+//                            textView1.setVisibility(View.GONE);
+//                            textView2.setVisibility(View.GONE);}
+//                    }
+//                  if (level==1){
+//                    if (tempnumber.get(1)==3){
+//                        textView2.setVisibility(View.VISIBLE);
+//                        textView1.setVisibility(View.VISIBLE);}
+//                    if (tempnumber.get(1)==2) {
+//                        textView1.setVisibility(View.VISIBLE);
+//                        textView2.setVisibility(View.GONE);}
+//                    if (tempnumber.get(1)==1) {
+//                        textView1.setVisibility(View.GONE);
+//                        textView2.setVisibility(View.GONE);}}
+//
+//                  if (level==0) {
+//                      if (tempnumber.get(0) == 3) {
+//                          textView2.setVisibility(View.VISIBLE);
+//                          textView1.setVisibility(View.VISIBLE);
+//                      }
+//                      if (tempnumber.get(0) == 2) {
+//                          textView1.setVisibility(View.VISIBLE);
+//                          textView2.setVisibility(View.GONE);
+//                      }
+//                      if (tempnumber.get(0) == 1) {
+//                          textView1.setVisibility(View.GONE);
+//                          textView2.setVisibility(View.GONE);
+//                      }
+//                  }
+//                    if (level==tempnumber.size()-1){
+////                        Winner1.setText("");
+////                        Winner2.setText("");
+////                        Winner3.setText("");
+//                        textView1.setText("");
+//                    if (tempnumber.get(tempnumber.size()-1)==2){
+//                        textView2.setVisibility(View.GONE);
+//                    }
+//                    if (tempnumber.get(tempnumber.size()-1)==1){
+//                        textView1.setVisibility(View.GONE);
+//                        textView2.setVisibility(View.GONE);
+//                    }}
+
                 }
                 else {
                     CustomDialog customDialog = new CustomDialog(LetteryActivity.this);
@@ -961,11 +984,8 @@ public class LetteryActivity extends AppCompatActivity implements View.OnClickLi
                         }
                     });
                     customDialog.show();
-                }
-                }
-                else {
-                    Toast.makeText(LetteryActivity.this,"在抽奖中", Toast.LENGTH_SHORT).show();
-                }
+                } }
+
                 break;
                 default:break;
         }

@@ -15,6 +15,8 @@ import com.example.qiang.activity.EditNoteActivity;
 import com.example.qiang.activity.LetteryActivity;
 import com.example.qiang.entity.Mainlottery;
 import com.example.qiang.gson.Note;
+import com.example.qiang.tool.BundleTemp;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -85,7 +87,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(parent.getContext(), LetteryActivity.class);
-                intent.putExtras(EditNoteActivity.newInstanceBundle(notes.get(viewHolder.getAdapterPosition()).getId()));
+                intent.putExtras(BundleTemp.newInstanceBundle(notes.get(viewHolder.getAdapterPosition()).getId(),notes.get(viewHolder.getAdapterPosition()).getMeetingid()));
 //                Log.d(TAG, "onClick: "+notes.get(viewHolder.getAdapterPosition()).getId());
                 parent.getContext().startActivity(intent);
             }
@@ -97,11 +99,11 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.ViewHolder> im
     public void onBindViewHolder(ViewHolder holder, int position) {
         Mainlottery note = noteListFiltered.get(position);
         holder.title.setText(note.getTitle());
-        holder.date.setText(note.getDate());
+        holder.date.setText(note.getDate().split(" ")[0]);
         holder.renshu.setText("人数");
         holder.totalpeople.setText(inttostring(note.getTotalpeople()));
-        holder.firstaward.setText("一等奖");
-        holder.award.setText(note.getAward1());
+        holder.firstaward.setText(note.getAward2());
+        holder.award.setText(note.getWinjson().equals("")?"等待抽奖":"已抽奖");
     }
 
     @Override

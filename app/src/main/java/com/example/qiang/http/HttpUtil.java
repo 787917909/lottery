@@ -9,8 +9,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 
 public class HttpUtil {
-    public static String BASE_URL= "http://10.132.212.167:8080/bird/";
-//    public static String BASE_URL= "http://223.255.255.194:8080/bird/";
+//    public static String BASE_URL= "http://10.132.212.167:8080/bird/";
+    public static String BASE_URL= "http://47.98.152.199:8080/bird/";
 
     public static void sendOkHttpRequest(String address, okhttp3.Callback callback){
         OkHttpClient client = new OkHttpClient();

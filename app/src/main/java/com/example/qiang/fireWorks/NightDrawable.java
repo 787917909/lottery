@@ -27,7 +27,7 @@ public class NightDrawable extends Drawable {
     private float textY;
     private int moonCenterColor = Color.argb(255, 255, 249, 177);
     private int moonLightColor = Color.argb(0, 255, 249, 177);
-    private int skyColor = Color.argb(255,0,31,86);
+    private int skyColor = Color.argb(255,255,0,0);
 
     Paint mPaint = new Paint();
 
@@ -67,7 +67,7 @@ public class NightDrawable extends Drawable {
     private void drawNight(Canvas canvas) {
         LinearGradient linearGradient = new LinearGradient(
                 w/2,0,w/2,h,
-                new int[]{skyColor,skyColor,Color.BLACK},new float[]{0,0.2f,1f}, Shader.TileMode.MIRROR
+                new int[]{skyColor,skyColor,Color.YELLOW},new float[]{0,0.2f,1f}, Shader.TileMode.MIRROR
         );
         mPaint.setShader(linearGradient);
         canvas.drawRect(0, 0, w, h, mPaint);

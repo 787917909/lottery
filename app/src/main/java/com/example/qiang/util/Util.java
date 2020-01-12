@@ -5,7 +5,7 @@ import android.widget.Toast;
 
 public class Util {
 //    static final String ip = "223.255.255.194";
-    static final String ip = "10.132.212.167";
+    static final String ip = "47.98.152.199";
 
     static final String port = "8887";
 

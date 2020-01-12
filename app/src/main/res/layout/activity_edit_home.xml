@@ -3,10 +3,10 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:background="@drawable/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/background"
-    tools:context="com.example.qiang.activity.EditNoteActivity">
+    tools:context="com.example.qiang.activity.EditHomeActivity">
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/textInputLayout"
         android:layout_width="368dp"
@@ -22,10 +22,10 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <EditText
-            android:id="@+id/title"
+            android:id="@+id/theme"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="抽奖标题"
+            android:hint="活动标题"
 
             tools:text=""/>
     </com.google.android.material.textfield.TextInputLayout>
@@ -34,6 +34,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
+
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toBottomOf="@id/textInputLayout"
@@ -43,80 +44,29 @@
         >
 
         <com.google.android.material.textfield.TextInputLayout
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-            android:layout_weight="2"
-            android:textColorHint="@color/red_normal"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/textInputLayout">
-        <EditText
-            android:id="@+id/award1"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-
-            android:hint="奖品"
-            tools:text="" />
-        </com.google.android.material.textfield.TextInputLayout>
-        <com.google.android.material.textfield.TextInputLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="2"
             android:textColorHint="@color/red_normal"
             app:layout_constraintLeft_toLeftOf="parent"
             app:layout_constraintRight_toRightOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/textInputLayout">
-            <EditText
-                android:id="@+id/peoplefirst"
+            <TextView
+                android:id="@+id/start_day"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center"
+                android:layout_height="30dp"
+                android:textColor="@color/black"
+                android:layout_centerVertical="true"
+                android:gravity="center_vertical"
+                android:textColorHint="@color/black"
+                android:hint="请选择"
 
-                android:hint="人数"
-                tools:text="" />
+                android:textSize="14dp" />
+        </com.google.android.material.textfield.TextInputLayout>
 
-    </com.google.android.material.textfield.TextInputLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:id="@+id/linear3"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/linear"
-        android:layout_marginEnd="22dp"
-        android:layout_marginStart="22dp"
-        android:layout_marginTop="8dp"
 
-        >
-        <CheckBox
-            android:gravity="center"
-            android:id="@+id/check_endless"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:text="无尽模式开启" />
-<!--        <com.google.android.material.textfield.TextInputLayout-->
-<!--            android:layout_width="180dp"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:layout_marginLeft="50dp"-->
-<!--            android:textColorHint="@color/red_normal"-->
-<!--            app:layout_constraintLeft_toLeftOf="parent"-->
-<!--            app:layout_constraintRight_toRightOf="parent"-->
-
-<!--            >-->
-<!--        <EditText-->
-<!--            android:id="@+id/award2"-->
-<!--            android:layout_width="match_parent"-->
-<!--            android:layout_height="wrap_content"-->
-<!--            android:gravity="center"-->
-
-<!--            android:hint="输入副标题(几等奖)"-->
-<!--            tools:text="" />-->
-<!--        </com.google.android.material.textfield.TextInputLayout>-->
-    </LinearLayout>
     <Button
         android:id="@+id/save"
         android:layout_width="wrap_content"
@@ -124,12 +74,11 @@
         android:layout_marginLeft="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginTop="16dp"
-        android:textColorHint="@color/red_normal"
-        android:text="确定添加"
+        android:text="确定添加/修改"
         app:layout_constraintHorizontal_bias="0.501"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/linear3" />
+        app:layout_constraintTop_toBottomOf="@+id/linear" />
     <!--<Spinner
         android:id="@+id/category_spinner"
         android:layout_width="368dp"

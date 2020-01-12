@@ -16,7 +16,6 @@ public class Mainlottery {
 
     private String date;
 
-
     private String winjson;
 
     private int peoplefirst;
